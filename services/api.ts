@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { parseCookies, setCookie } from 'nookies';
 
 let cookies = parseCookies();
+let isRefreshing = false;
+let failedRequestsQueue = [];
 
 export const api = axios.create({
   baseURL: 'http://localhost:3333',
@@ -20,22 +22,49 @@ api.interceptors.response.use(response => {
 
       const { 'nextauth.refreshToken': refreshToken } = cookies;
 
-      api.post('/refresh', {
-        refreshToken,
-      }).then(response => {
-        const { token } = response.data;
+      const originalConfig = error.config; //previously config in order to later repeat the same request
 
-        setCookie(undefined, 'nextauth.token', token, {
-          maxAge: 60 * 60 * 24 * 30, //30 days
-          path: '/' //all routes can access this cookie
-        });
-  
-        setCookie(undefined, 'nextauth.refreshToken', response.data.refreshToken, {
-          maxAge: 60 * 60 * 24 * 30, //30 days
-          path: '/' //all routes can access this cookie
-        });
+      if (!isRefreshing) {
+        isRefreshing = true;
 
-        api.defaults.headers['Authorization'] = `Bearer ${token}`; //updating token after login
+        api.post('/refresh', {
+          refreshToken,
+        }).then(response => {
+          const { token } = response.data;
+
+          setCookie(undefined, 'nextauth.token', token, {
+            maxAge: 60 * 60 * 24 * 30, //30 days
+            path: '/' //all routes can access this cookie
+          });
+
+          setCookie(undefined, 'nextauth.refreshToken', response.data.refreshToken, {
+            maxAge: 60 * 60 * 24 * 30, //30 days
+            path: '/' //all routes can access this cookie
+          });
+
+          api.defaults.headers['Authorization'] = `Bearer ${token}`; //updating token after login
+
+          failedRequestsQueue.forEach(request => request.onSuccess(token));
+          failedRequestsQueue = [];
+        }).catch(err => {
+          failedRequestsQueue.forEach(request => request.onFailure(err));
+          failedRequestsQueue = [];
+        }).finally(() => {
+          isRefreshing = false
+        });
+      }
+
+      return new Promise((resolve, reject) => {
+        failedRequestsQueue.push({
+          onSuccess: (token: string) => {
+            originalConfig.headers['Authorization'] = `Bearer ${token}`
+
+            resolve(api(originalConfig))
+          },
+          onFailure: (err: AxiosError) => {
+            reject(err)
+          }
+        })
       })
     } else {
       // logout user
