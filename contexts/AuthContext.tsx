@@ -52,12 +52,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const { token, refreshToken, permissions, roles } = response.data;
 
-      setUser({
-        email,
-        permissions,
-        roles
-      });
-
       setCookie(undefined, 'nextauth.token', token, {
         maxAge: 60 * 60 * 24 * 30, //30 days
         path: '/' //all routes can access this cookie
@@ -66,6 +60,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setCookie(undefined, 'nextauth.refreshToken', refreshToken, {
         maxAge: 60 * 60 * 24 * 30, //30 days
         path: '/' //all routes can access this cookie
+      });
+
+      setUser({
+        email,
+        permissions,
+        roles
       });
 
       api.defaults.headers['Authorization'] = `Bearer ${token}`; //updating token after login
