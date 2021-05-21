@@ -7,7 +7,7 @@ import { AuthTokenError } from './errors/AuthTokenError';
 let isRefreshing = false;
 let failedRequestsQueue = [];
 
-export function setupAPICLient(ctx = undefined) {
+export function setupAPIClient(ctx = undefined) {
   let cookies = parseCookies(ctx);
 
   const api = axios.create({

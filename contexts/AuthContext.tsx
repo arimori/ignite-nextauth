@@ -47,7 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           setUser({ email, permissions, roles })
         })
-        .catch(error => {
+        .catch(() => {
           signOut();
         });
     }
