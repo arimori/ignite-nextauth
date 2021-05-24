@@ -6,6 +6,7 @@
 ## 💡 What is it?
 NextAuth is a study project created during the Ignite bootcamp by Rocketseat in order to learn and practice more about authentication and permissions using NextJS (SSR).
 
-## 🚧 Built With
-- NextJS
-- TypeScript
+## 🚀 Built With
+* [NextJS](https://nextjs.org/)
+* [Typescript](https://www.typescriptlang.org/)
+* [React](https://reactjs.org/)
